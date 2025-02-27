@@ -3,6 +3,7 @@ package com.pranshulgg.notesmaster;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.content.res.ResourcesCompat;
 
 import android.animation.ArgbEvaluator;
 import android.animation.ObjectAnimator;
@@ -13,12 +14,15 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.Typeface;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.text.InputType;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.View;
+import android.view.ViewGroup;
 import android.webkit.JavascriptInterface;
 import android.webkit.JsPromptResult;
 import android.webkit.JsResult;
@@ -27,7 +31,10 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.widget.EditText;
+import android.widget.TextView;
 import android.widget.Toast;
+
+import com.google.android.material.snackbar.Snackbar;
 
 public class NoteView extends AppCompatActivity {
     private WebView webview;
@@ -71,6 +78,7 @@ public class NoteView extends AppCompatActivity {
         webview.addJavascriptInterface(androidInterface, "AndroidInterface");
         webview.addJavascriptInterface(new NavigateActivityInterface(this), "OpenActivityInterface");
         webview.addJavascriptInterface(new BackActivityInterface(this), "BackActivityInterface");
+        webview.addJavascriptInterface(new ShowSnackInterface(this), "ShowSnackMessage");
 
 
         webview.loadUrl("file:///android_asset/pages/note-editor.html");
@@ -99,6 +107,49 @@ public class NoteView extends AppCompatActivity {
 
             intent.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
             mContext.startActivity(intent);
+        }
+    }
+
+    public class ShowSnackInterface {
+        private final Context mContext;
+
+        public ShowSnackInterface(Context context) {
+            this.mContext = context;
+        }
+
+        @JavascriptInterface
+        public void ShowSnack(final String text, final String time) {
+            int duration = Snackbar.LENGTH_SHORT;
+            if ("long".equals(time)) {
+                duration = Snackbar.LENGTH_LONG;
+            } else if ("short".equals(time)){
+                duration = Snackbar.LENGTH_SHORT;
+            }
+
+
+            Snackbar snackbar = Snackbar.make(((Activity) mContext).findViewById(android.R.id.content), text, duration);
+
+            View snackbarView = snackbar.getView();
+
+
+
+            TextView textView = snackbarView.findViewById(com.google.android.material.R.id.snackbar_text);
+            textView.setTextSize(TypedValue.COMPLEX_UNIT_SP, 15);
+            Typeface typeface = ResourcesCompat.getFont(mContext, R.font.roboto_medium);
+            textView.setTypeface(typeface);
+
+
+            ViewGroup.LayoutParams params = snackbar.getView().getLayoutParams();
+            if (params instanceof ViewGroup.MarginLayoutParams) {
+                ViewGroup.MarginLayoutParams marginParams = (ViewGroup.MarginLayoutParams) params;
+                marginParams.bottomMargin = 34;
+                marginParams.leftMargin = 26;
+                marginParams.rightMargin = 26;
+                snackbar.getView().setLayoutParams(marginParams);
+            }
+
+
+            snackbar.show();
         }
     }
 
